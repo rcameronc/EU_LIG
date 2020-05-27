@@ -54,10 +54,10 @@ exec 4>&-
 ## create this folder in the same directory as this file
 
 cd ..
-mkdir execute_fen
+mkdir execute_eu
 
 # go to execute folder
-cd execute_fen
+cd execute_eu
 # rm $fileName
 # write a submit script that passes parameters on to execute script
 
@@ -77,7 +77,7 @@ cd execute_fen
     echo " " >&3
     echo "module load singularity" >&3
     echo "module load cuda80/toolkit" >&3
-    echo "cd ../run_fen/" >&3 
+    echo "cd ../run_fen/" >&3
     echo "singularity exec --nv /rigel/jalab/users/rcc2167/gpflow-tensorflow-rcc2167.simg bash ${fileName_run}" >&3
 
 
