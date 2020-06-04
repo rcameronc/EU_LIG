@@ -26,6 +26,19 @@ from typing import Optional, Tuple
 
 from basinhopping import Optimize
 
+from matplotlib.colors import Normalize
+
+# set the colormap and centre the colorbar
+class MidpointNormalize(Normalize):
+    """Normalise the colorbar.  e.g. norm=MidpointNormalize(mymin, mymax, 0.)"""
+    def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+        self.midpoint = midpoint
+        Normalize.__init__(self, vmin, vmax, clip)
+
+    def __call__(self, value, clip=None):
+        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
+
 def load_nordata_fromsheet(sheet, fromsheet=False):
 
     """Connect to google sheet & load norwegian RSL data."""
@@ -44,7 +57,7 @@ def load_nordata_fromsheet(sheet, fromsheet=False):
         df = pd.DataFrame(table[2:], columns=table[2]).drop([0, 1, 2]).reset_index()
 
     else:
-        path = '../data/holocene_fennoscandian_data_05132020.csv'
+        path = '../../data/holocene_fennoscandian_data_05132020.csv'
         table = pd.read_csv(path)
         df = table[4:].rename(columns=table.iloc[1]).reset_index()
 
@@ -241,9 +254,13 @@ class HaversineKernel_Matern32(gpf.kernels.Matern32):
         f = tf.expand_dims(X * pi, -2)  # ... x N x 1 x D
         f2 = tf.expand_dims(X2 * pi, -3)  # ... x 1 x M x D
         d = tf.sin((f - f2) / 2)**2
-        lat1, lat2 = tf.expand_dims(X[:, 0] * pi, -1), tf.expand_dims(X2[:, 0] * pi, -2)
+        
+        # this should be latitude, so second column if lon/lat/time
+        lat1, lat2 = tf.expand_dims(X[:, 1] * pi, -1), tf.expand_dims(X2[:, 1] * pi, -2)
         cos_prod = tf.cos(lat2) * tf.cos(lat1)
-        a = d[:, :, 0] + cos_prod * d[:, :, 1]
+        
+        # here d[:,:,0] = lon, d[:,:,1] = lat
+        a = d[:, :, 1] + cos_prod * d[:, :, 0]
         c = tf.asin(tf.sqrt(a)) * 6371 * 2
         return c
 
@@ -256,83 +273,6 @@ class HaversineKernel_Matern32(gpf.kernels.Matern32):
         dist = tf.square(self.haversine_dist(X, X2) / self.lengthscales)
 
         return dist
-
-
-# class GPR_new(GPModel, InternalDataTrainingLossMixin):
-#     r"""
-#     Gaussian Process Regression.
-#     This is a vanilla implementation of GP regression with a Gaussian
-#     likelihood.  Multiple columns of Y are treated independently.
-#     The log likelihood of this model is sometimes referred to as the 'log
-#     marginal likelihood', and is given by
-#     .. math::
-#        \log p(\mathbf y \,|\, \mathbf f) =
-#             \mathcal N(\mathbf{y} \,|\, 0, \mathbf{K} + \sigma_n \mathbf{I})
-#     """
-
-#     def __init__(
-#         self,
-#         data: RegressionData,
-#         kernel: Kernel,
-#         mean_function: Optional[MeanFunction] = None,
-# #         noise_variance: float = 1.0,
-#         noise_variance: list = [],
-#     ):
-
-#         likelihood = gpflow.likelihoods.Gaussian(noise_variance)
-#         _, Y_data = data
-#         super().__init__(kernel, likelihood, mean_function, num_latent_gps=Y_data.shape[-1])
-#         self.data = data
-
-#     def maximum_log_likelihood_objective(self) -> tf.Tensor:
-#         return self.log_marginal_likelihood()
-
-#     def log_marginal_likelihood(self) -> tf.Tensor:
-#         r"""
-#         Computes the log marginal likelihood.
-#         .. math::
-#             \log p(Y | \theta).
-#         """
-#         X, Y = self.data
-#         K = self.kernel(X)
-#         num_data = X.shape[0]
-#         k_diag = tf.linalg.diag_part(K)
-# #         s_diag = tf.fill([num_data], self.likelihood.variance)
-#         s_diag = tf.convert_to_tensor(self.likelihood.variance)
-
-
-#         ks = tf.linalg.set_diag(K, k_diag + s_diag)
-#         L = tf.linalg.cholesky(ks)
-#         m = self.mean_function(X)
-
-#         # [R,] log-likelihoods for each independent dimension of Y
-#         log_prob = multivariate_normal(Y, m, L)
-#         return tf.reduce_sum(log_prob)
-
-#     def predict_f(
-#         self, Xnew: InputData, full_cov: bool = False, full_output_cov: bool = False
-#     ) -> MeanAndVariance:
-#         r"""
-#         This method computes predictions at X \in R^{N \x D} input points
-#         .. math::
-#             p(F* | Y)
-#         where F* are points on the GP at new data points, Y are noisy observations at training data points.
-#         """
-#         X_data, Y_data = self.data
-#         err = Y_data - self.mean_function(X_data)
-
-#         kmm = self.kernel(X_data)
-#         knn = self.kernel(Xnew, full_cov=full_cov)
-#         kmn = self.kernel(X_data, Xnew)
-
-#         s = tf.linalg.diag(tf.convert_to_tensor(self.likelihood.variance))
-
-#         conditional = gpflow.conditionals.base_conditional
-#         f_mean_zero, f_var = conditional(
-#             kmn, kmm + s, knn, err, full_cov=full_cov, white=False
-#         )  # [N, P], [N, P] or [P, N, N]
-#         f_mean = f_mean_zero + self.mean_function(Xnew)
-#         return f_mean, f_var
 
 
 def locs_with_enoughsamples(df_place, place, number):
@@ -491,9 +431,9 @@ def run_gpr(nout, iterations, ds_single, ages, k1len, k2len, k3len, k4len, df_pl
     RSL = normalize(df_place.rsl_realresid)
 
     #define kernels  with bounds
-    k1 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1)
-    k1.lengthscales = bounded_parameter(10, 1000, k1len) 
-    k1.variance = bounded_parameter(0.01, 100, 2)
+    k1 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1000)
+#     k1.lengthscales = bounded_parameter(10, 1000, k1len) 
+#     k1.variance = bounded_parameter(0.01, 100, 2)
 
     k2 = gpf.kernels.Matern32(active_dims=[2], lengthscales=1) 
     k2.lengthscales = bounded_parameter(1, 100000, k2len)
@@ -531,7 +471,7 @@ def run_gpr(nout, iterations, ds_single, ages, k1len, k2len, k3len, k4len, df_pl
     
     tf.print('___First optimization___')
     opt = Optimize()
-    closure = m.training_loss
+    closure = m.training_loss 
     variables = m.trainable_variables
     
     opt_logs = opt.basinhopping(closure=m.training_loss, variables=m.trainable_variables, minimizer_kwargs=min_kwargs)
@@ -552,7 +492,7 @@ def run_gpr(nout, iterations, ds_single, ages, k1len, k2len, k3len, k4len, df_pl
 #     opt = tf.optimizers.Adam(learning_rate)
 
     opt = Optimize()
-    closure = m.training_loss
+    closure = m.training_loss 
     variables = m.trainable_variables
 
     opt_logs = opt.basinhopping(closure=closure, variables=variables, minimizer_kwargs=min_kwargs)
@@ -577,7 +517,10 @@ def run_gpr(nout, iterations, ds_single, ages, k1len, k2len, k3len, k4len, df_pl
     df_place['gpr_diff'] = df_place.apply(lambda row: row.rsl - row.gpr_posterior, axis=1)
     df_place['diffdiv'] = df_place.gpr_diff / df_place.rsl_er
 
-    return ds_giapriorinterp, ds_zp, ds_priorplusgpr, ds_varp, m.log_marginal_likelihood().numpy(), m, df_place
+    # change likelihood to negative because we're minimizing neg log likelihood but want max/largest
+    likelihood = - m.log_marginal_likelihood().numpy()
+    
+    return ds_giapriorinterp, ds_zp, ds_priorplusgpr, ds_varp, likelihood, m, df_place
 
 def interp_ds(ds):
     return ds.interp(age=ds_single.age, lat=ds_single.lat, lon=ds_single.lon)

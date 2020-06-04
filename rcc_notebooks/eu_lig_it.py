@@ -24,8 +24,8 @@ import argparse
 @profile
 
 def gpr_it():
-    
-    
+
+
     parser = argparse.ArgumentParser(description='import vars via c-line')
     parser.add_argument("--mod", default='d6g_h6g_')
     parser.add_argument("--lith", default='l71C')
@@ -33,13 +33,13 @@ def gpr_it():
     parser.add_argument("--lm", default='3')
     parser.add_argument("--tmax", default=15000)
     parser.add_argument("--tmin", default=50)
-    parser.add_argument("--place", default="northsea_uk_tight")
+    parser.add_argument("--place", default="arctic")
     parser.add_argument("--nout", default=60)
     parser.add_argument("--iters", default=3000)
     parser.add_argument("--kernels", default=[500, 10000, 5000, 10000])
 
     args = parser.parse_args()
-    
+
     ice_model = args.mod
     lith = args.lith
     um = args.um        # must be string not int
@@ -53,21 +53,22 @@ def gpr_it():
     k2 = int(args.kernels[1])
     k3 = int(args.kernels[2])
     k4 = int(args.kernels[3])
-    
+
     modelrun = ice_model + lith + '_um' + um + '_lm' + lm
 
-    
+
     agemax = round(tmax, -3) + 100
     agemin = round(tmin, -3)
     ages = np.arange(agemin, agemax, 100)[::-1]
-    
+
 
     locs = {
             'northsea_uk': [-10, 10, 45, 59],
             'northsea_uk_tight': [-5, 10, 50, 55],
             'fennoscandia': [-15, 50, 45, 75],
             'norway': [0, 50, 50, 75],
-            'europe_arctic': [-15, 88, 45, 85]
+            'europe_arctic': [-15, 88, 45, 85],
+            'arctic': [15, 88, 40, 85]
     }
     extent = locs[place]
 
@@ -79,7 +80,7 @@ def gpr_it():
     path = '../data/GSL_LGM_120519_.csv'
     df_place = import_rsls(path, df_nor, tmin, tmax, extent)
 
-    # add zeros at present-day.  
+    # add zeros at present-day.
     nout = 50
     df_place = add_presday_0s(df_place, nout)
 
@@ -91,7 +92,7 @@ def gpr_it():
     #####################    Load GIA datasets   #######################
 
     ds = make_mod(ice_model, lith, ages, extent)
-    
+
     ds = make_mod(path, ice_model, lith, ages, extent)
     ds = ds.sel(modelrun=modelrun)
     ds = ds.load().chunk((-1,-1,-1))
@@ -164,7 +165,7 @@ def gpr_it():
     df_params['likelihood'] = loglike
     df_params['rmse'] = rmse
     df_params.to_csv(path + '_hyperparams.csv', index=True)
-    
+
 
     df_out = pd.DataFrame({'modelrun': name,
                  'log_marginal_likelihood': [loglike],
