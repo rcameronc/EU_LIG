@@ -91,7 +91,7 @@ def gpr_it():
 
     #####################    Load GIA datasets   #######################
 
-    ds = make_mod(ice_model, lith, ages, extent)
+    path = f'../../data/{ice_model}/output_{ice_model}{lith}'
 
     ds = make_mod(path, ice_model, lith, ages, extent)
     ds = ds.sel(modelrun=modelrun)
@@ -105,7 +105,7 @@ def gpr_it():
     wrmselist = []
 
 
-    #####################    Run Iterative GP Regression   ##################
+    #####################   Interpolate at datapoints   ##################
 
     #interpolate/select priors from GIA model
     df_place['rsl_giaprior'] = df_place.apply(lambda row: ds_select(ds, row), axis=1)
