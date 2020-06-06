@@ -20,7 +20,7 @@ do
 for tmin in 100 # 5990 1990
 do
 
-for place in arctic # northsea_uk_tight # europe
+for place in northsea_uk_tight # arctic # # europe
 do
 
 # put together file name
@@ -71,13 +71,13 @@ cd execute_eu
     echo "#SBATCH -J $run_name" >&3
     echo "#SBATCH --gres=gpu:1" >&3
 #     echo "#SBATCH --mem-per-cpu=125gb" >&3
-    echo "#SBATCH --time=02:00:00" >&3
+    echo "#SBATCH --time=20:00:00" >&3
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3
     echo "module load singularity" >&3
     echo "module load cuda80/toolkit" >&3
-    echo "cd ../run_fen/" >&3
+    echo "cd ../run_eu/" >&3
     echo "singularity exec --nv /rigel/jalab/users/rcc2167/gpflow-tensorflow-rcc2167.simg bash ${fileName_run}" >&3
 
 
