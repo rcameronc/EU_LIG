@@ -34,8 +34,7 @@ def gpr_it():
     parser.add_argument("--tmax", default=15000)
     parser.add_argument("--tmin", default=50)
     parser.add_argument("--place", default="arctic")
-    parser.add_argument("--nout", default=60)
-    parser.add_argument("--iters", default=3000)
+    parser.add_argument("--nout", default=80)
     parser.add_argument("--kernels", default=[500, 10000, 5000, 10000])
 
     args = parser.parse_args()
@@ -48,7 +47,6 @@ def gpr_it():
     tmin = int(args.tmin)
     place = args.place
     nout = int(args.nout)
-    iterations = int(args.iters)
     k1 = int(args.kernels[0])
     k2 = int(args.kernels[1])
     k3 = int(args.kernels[2])
@@ -68,17 +66,25 @@ def gpr_it():
             'fennoscandia': [-15, 50, 45, 75],
             'norway': [0, 50, 50, 75],
             'europe_arctic': [-15, 88, 45, 85],
-            'arctic': [15, 88, 40, 85]
+            'arctic': [15, 88, 40, 85],
+            'english_channel': [-5, 2, 48, 52],
+            'denmark_netherlands': [3, 12, 52, 56],
+            'north_england':[-5, 2.5, 53, 56],
     }
     extent = locs[place]
 
     ##Get Norway data sheet from Google Drive
     sheet = 'Norway_isolation'
-    df_nor = load_nordata_fromsheet(sheet, fromsheet=False)
+    path = '../../data/holocene_fennoscandian_data_05132020.csv'
+    df_nor = load_nordata_fromsheet(sheet, path, fromsheet=False)
+    
+    # Get Barnett data
+    path = f'../../data/SciAdv_Barnett_SupplementaryDataset_S1_long.csv'
+    df_barnett = import_barnett2020(path)
 
     #import khan dataset
-    path = '../data/GSL_LGM_120519_.csv'
-    df_place = import_rsls(path, df_nor, tmin, tmax, extent)
+    path = '../../data/GSL_LGM_120519_.csv'
+    df_place = import_rsls(path, df_nor, df_barnett, tmin, tmax, extent)
 
     # add zeros at present-day.
     nout = 50
@@ -86,7 +92,7 @@ def gpr_it():
 
     #####################  Make xarray template  #######################
 
-    filename = '../data/xarray_template.mat'
+    filename = '../../data/xarray_template.mat'
     ds_template = xarray_template(filename, ages, extent)
 
     #####################    Load GIA datasets   #######################
@@ -129,7 +135,7 @@ def gpr_it():
         ##################	  RUN GP REGRESSION 	#######################
 
 
-    ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, loglike, m, df_place = run_gpr(nout, iterations, ds, ages, k1, k2, k3, k4, df_place)
+    ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, loglike, m, df_place = run_gpr(nout, ds, ages, k1, k2, k3, k4, df_place)
 
     name = ds.modelrun.values.tolist()
 

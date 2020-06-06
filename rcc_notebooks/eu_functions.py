@@ -39,7 +39,7 @@ class MidpointNormalize(Normalize):
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
 
-def load_nordata_fromsheet(sheet, fromsheet=False):
+def load_nordata_fromsheet(sheet, path, fromsheet=False):
 
     """Connect to google sheet & load norwegian RSL data."""
 
@@ -57,7 +57,6 @@ def load_nordata_fromsheet(sheet, fromsheet=False):
         df = pd.DataFrame(table[2:], columns=table[2]).drop([0, 1, 2]).reset_index()
 
     else:
-        path = '../../data/holocene_fennoscandian_data_05132020.csv'
         table = pd.read_csv(path)
         df = table[4:].rename(columns=table.iloc[1]).reset_index()
 
@@ -163,7 +162,7 @@ def add_presday_0s(df_place, nout):
     df_place = pd.concat([df_place, preslocs]).reset_index(drop=True)
     return df_place
 
-def import_rsls(path, df_nor, tmin, tmax, extent):
+def import_rsls(path, df_nor, df_barnett, tmin, tmax, extent):
 
     """ import khan Holocene RSL database from csv."""
 
@@ -176,7 +175,7 @@ def import_rsls(path, df_nor, tmin, tmax, extent):
     dfind, dfterr, dfmar = df[(df.type == 0)
                               & (df.age > 0)], df[df.type == 1], df[df.type == -1]
 
-    dfind = pd.concat([dfind, df_nor]).reset_index(drop=True)
+    dfind = pd.concat([dfind, df_nor, df_barnett]).reset_index(drop=True)
     
     #select location
     df_slice = dfind[(dfind.age > tmin) & (dfind.age < tmax) &
@@ -423,7 +422,7 @@ def predict_post_f(nout, ages, ds_single, df_place, m):
     return da_zp, da_varp
 
 
-def run_gpr(nout, iterations, ds_single, ages, k1len, k2len, k3len, k4len, df_place):
+def run_gpr(nout, ds_single, ages, k1len, k2len, k3len, k4len, df_place):
 
     # Input space, rsl normalized to zero mean, unit variance
     X = np.stack((df_place.lon, df_place.lat, df_place.age), 1)
@@ -432,8 +431,8 @@ def run_gpr(nout, iterations, ds_single, ages, k1len, k2len, k3len, k4len, df_pl
 
     #define kernels  with bounds
     k1 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1000)
-#     k1.lengthscales = bounded_parameter(10, 1000, k1len) 
-#     k1.variance = bounded_parameter(0.01, 100, 2)
+    k1.lengthscales = bounded_parameter(10, 1000, k1len) 
+    k1.variance = bounded_parameter(0.01, 100, 2)
 
     k2 = gpf.kernels.Matern32(active_dims=[2], lengthscales=1) 
     k2.lengthscales = bounded_parameter(1, 100000, k2len)
