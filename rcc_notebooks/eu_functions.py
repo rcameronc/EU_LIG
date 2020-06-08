@@ -162,6 +162,29 @@ def add_presday_0s(df_place, nout):
     df_place = pd.concat([df_place, preslocs]).reset_index(drop=True)
     return df_place
 
+def import_barnett2020(path):
+    
+    df_barnett = pd.read_csv(path, header=1)
+    df_barnett.rename(columns={'Longitude':'lon',
+                            'Latitude':'lat',
+                            'Corrected RSL (m) (if any)':'rsl',
+                            'Corrected RSL uncertainty + (m)                 (if any)':'rsl_er_max',
+                            'Corrected RSL uncertainty - (m)              (if any)': 'rsl_er_min',
+                            'Age                   (cal a BP)':'age',
+                            'Age 2σ Uncertainty +              (cal a)':'age_er_max',
+                            'Age 2σ Uncertainty  -                (cal a)':'age_er_min'}, inplace=True)
+
+    # drop na columns
+    df_barnett = df_barnett.dropna(axis=0, how='any', thresh=10)
+
+    # drop all datapoints from Perez et al. 2015
+    df_barnett = df_barnett[(~df_barnett.iloc[:,1].str.contains('Perez')).dropna()]
+    
+    df_barnett['rsl_er'] = (df_barnett.rsl_er_max + df_barnett.rsl_er_min)/2
+    df_barnett['age_er'] = (df_barnett.age_er_max + df_barnett.age_er_min)/2
+    
+    return df_barnett
+
 def import_rsls(path, df_nor, df_barnett, tmin, tmax, extent):
 
     """ import khan Holocene RSL database from csv."""
@@ -466,7 +489,7 @@ def run_gpr(nout, ds_single, ages, k1len, k2len, k3len, k4len, df_place):
     # indices = np.where(np.in1d(df_place.age, agetile))[0]
     
     # First optimize without age errs to get slope
-    min_kwargs = ({'method':'SLSQP', 'jac':True})
+    min_kwargs = ({'method':'L-BFGS-B', 'jac':True})
     
     tf.print('___First optimization___')
     opt = Optimize()
