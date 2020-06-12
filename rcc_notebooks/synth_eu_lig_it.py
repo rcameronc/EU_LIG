@@ -100,12 +100,14 @@ def gpr_it():
     path = f'../../data/{ice_model}/output_{ice_model}{lith}'
 
     ds = make_mod(path, ice_model, lith, ages, extent)
-    ds = ds.sel(modelrun=modelrun)
     ds = ds.load().chunk((-1,-1,-1))
     ds = ds.interp(lon=ds_template.lon, lat=ds_template.lat).to_dataset()
 
     # choose arbitrary true model
-    ds_true = ds_true.sel(modelrun=['glac1d_l96C_ump4_lm10'])
+    ds_true = ds.sel(modelrun=['glac1d_l96C_ump4_lm10'])
+
+    # choose prior model
+    ds = ds.sel(modelrun=modelrun)
 
     likelist = []
     namelist = []
