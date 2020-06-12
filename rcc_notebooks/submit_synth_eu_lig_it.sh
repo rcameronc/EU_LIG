@@ -24,10 +24,10 @@ for place in english_channel # denmark_netherlands north_england # northsea_uk_t
 do
 
 # put together file name
-fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}"
-fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}.sh"
-fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}.out"
-run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}";
+fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth"
+fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth.sh"
+fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth.out"
+run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth";
 
 
 ## create this folder in the same place as this file
