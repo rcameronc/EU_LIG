@@ -34,8 +34,9 @@ def gpr_it():
     parser.add_argument("--tmax", default=15000)
     parser.add_argument("--tmin", default=50)
     parser.add_argument("--place", default="arctic")
-    parser.add_argument("--nout", default=80)
+    parser.add_argument("--nout", default=50)
     parser.add_argument("--kernels", default=[500, 10000, 5000, 10000])
+    parser.add_argument("--scale", default=1)
 
     args = parser.parse_args()
 
@@ -51,6 +52,7 @@ def gpr_it():
     k2 = int(args.kernels[1])
     k3 = int(args.kernels[2])
     k4 = int(args.kernels[3])
+    scale = int(args.scale)
 
     modelrun = ice_model + lith + '_um' + um + '_lm' + lm
 
@@ -87,7 +89,7 @@ def gpr_it():
     df_place = import_rsls(path, df_nor, df_barnett, tmin, tmax, extent)
 
     # add zeros at present-day.
-    nout = 50
+    nout = nout
     df_place = add_presday_0s(df_place, nout)
 
     #####################  Make xarray template  #######################
@@ -107,7 +109,14 @@ def gpr_it():
     ds_true = ds.sel(modelrun=['glac1d_l96C_ump4_lm10'])
 
     # choose prior model
-    ds = ds.sel(modelrun=modelrun)
+#     ds = ds.sel(modelrun=modelrun)
+
+    # make noisy version of true model
+    ds = ds_true + np.random.randn(ds.shape[0], 
+                                 ds.shape[1], 
+                                 ds.shape[2], 
+                                 ds.shape[3]) * scale
+
 
     likelist = []
     namelist = []
@@ -174,7 +183,6 @@ def gpr_it():
     cols = ['lengthscale', 'variance']
 #     idx = ['k1', 'k2', 'k3', 'k4', 'k5']
     idx = ['k1', 'k2', 'k5']
-
 
 #     df_params = pd.DataFrame(np.concatenate([k1k2, k3k4, k5]), columns=cols, index=idx)
     df_params = pd.DataFrame(np.concatenate([k1k2, k5]), columns=cols, index=idx)
