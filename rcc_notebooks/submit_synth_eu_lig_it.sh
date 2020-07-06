@@ -23,11 +23,14 @@ do
 for place in english_channel # denmark_netherlands north_england # northsea_uk_tight # arctic # # europe
 do
 
+for scale in 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+do
+
 # put together file name
-fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth"
-fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth.sh"
-fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth.out"
-run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth";
+fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth2"
+fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth2.sh"
+fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth2.out"
+run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth2";
 
 
 ## create this folder in the same place as this file
@@ -45,7 +48,7 @@ exec 4<> $fileName_run
     # Let's print some text to fd 3
     echo "cd .." >&4
     echo "source activate gpflow6_0" >&4
-    echo "python -m memory_profiler synth_eu_lig_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin --place $place" >&4
+    echo "python -m memory_profiler synth2_eu_lig_it.py --mod $name --lith $lith --um $um --lm $lm --tmax $tmax --tmin $tmin --place $place --scale $scale" >&4
     echo "exit" >&4
 
 # Close fd 4
@@ -93,6 +96,7 @@ echo "sbatch $fileName"
 # go back to start
 cd ..
 
+done
 done
 done
 done

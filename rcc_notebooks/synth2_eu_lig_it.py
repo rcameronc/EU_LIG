@@ -115,7 +115,7 @@ def gpr_it():
     ds = ds_true + np.random.randn(ds_true.rsl.shape[0], 
                                  ds_true.rsl.shape[1], 
                                  ds_true.rsl.shape[2], 
-                                 ds_true.rsl.shape[3]) * scale
+                                 ds_true.rsl.shape[3]) * scale * 0.1 
 
 
     likelist = []
@@ -153,7 +153,7 @@ def gpr_it():
 
     ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, loglike, m, df_place = run_gpr(nout, ds, ages, k1, k2, k3, k4, df_place)
 
-    name = ds.modelrun.values.tolist()
+    name = ds.modelrun.values.tolist()[0]
     print(name)
 
     path = f'synth_output2/{place}_{name}_{ages[0]}_{ages[-1]}'
@@ -189,7 +189,7 @@ def gpr_it():
     df_params = pd.DataFrame(np.concatenate([k1k2, k5]), columns=cols, index=idx)
     print(df_params)
 
-    df_params['model'] = name[0]
+    df_params['model'] = name
     df_params['likelihood'] = loglike
     df_params['rmse'] = rmse
     df_params.to_csv(path + '_hyperparams.csv', index=True)
