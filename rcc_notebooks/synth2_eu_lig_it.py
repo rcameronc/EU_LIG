@@ -112,10 +112,10 @@ def gpr_it():
 #     ds = ds.sel(modelrun=modelrun)
 
     # make noisy version of true model
-    ds = ds_true + np.random.randn(ds.shape[0], 
-                                 ds.shape[1], 
-                                 ds.shape[2], 
-                                 ds.shape[3]) * scale
+    ds = ds_true + np.random.randn(ds_true.rsl.shape[0], 
+                                 ds_true.rsl.shape[1], 
+                                 ds_true.rsl.shape[2], 
+                                 ds_true.rsl.shape[3]) * scale
 
 
     likelist = []
@@ -155,7 +155,7 @@ def gpr_it():
 
     name = ds.modelrun.values.tolist()
 
-    path = f'synth_output/{place}_{name}_{ages[0]}_{ages[-1]}'
+    path = f'synth_output2/{place}_{name}_{ages[0]}_{ages[-1]}'
     da_zp.to_netcdf(path + '_dazp')
     da_zp['model'] = name
     da_zp['likelihood'] = loglike
