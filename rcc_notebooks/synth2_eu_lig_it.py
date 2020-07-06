@@ -154,6 +154,7 @@ def gpr_it():
     ds_giapriorinterp, da_zp, ds_priorplusgpr, ds_varp, loglike, m, df_place = run_gpr(nout, ds, ages, k1, k2, k3, k4, df_place)
 
     name = ds.modelrun.values.tolist()
+    print(name)
 
     path = f'synth_output2/{place}_{name}_{ages[0]}_{ages[-1]}'
     da_zp.to_netcdf(path + '_dazp')
@@ -186,9 +187,9 @@ def gpr_it():
 
 #     df_params = pd.DataFrame(np.concatenate([k1k2, k3k4, k5]), columns=cols, index=idx)
     df_params = pd.DataFrame(np.concatenate([k1k2, k5]), columns=cols, index=idx)
+    print(df_params)
 
-
-    df_params['model'] = name
+    df_params['model'] = name[0]
     df_params['likelihood'] = loglike
     df_params['rmse'] = rmse
     df_params.to_csv(path + '_hyperparams.csv', index=True)
