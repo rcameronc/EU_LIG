@@ -156,7 +156,7 @@ def gpr_it():
     name = ds.modelrun.values.tolist()[0]
     print(name)
 
-    path = f'synth_output2/{place}_{name}_{ages[0]}_{ages[-1]}'
+    path = f'synth_output2/{place}_{name}_{ages[0]}_{ages[-1]}_{scale}'
     da_zp.to_netcdf(path + '_dazp')
     da_zp['model'] = name
     da_zp['likelihood'] = loglike

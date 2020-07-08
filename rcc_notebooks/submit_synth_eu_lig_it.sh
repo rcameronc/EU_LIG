@@ -27,10 +27,10 @@ for scale in 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 do
 
 # put together file name
-fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth2"
-fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth2.sh"
-fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth2.out"
-run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_synth2";
+fileName="execute_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_${scale}_synth2"
+fileName_run="run_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_${scale}_synth2.sh"
+fileName_out="out_${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_${scale}_synth2.out"
+run_name="${name}${lith}_${um}_${lm}_${tmax}_${tmin}_${place}_${scale}_synth2";
 
 
 ## create this folder in the same place as this file
@@ -74,7 +74,7 @@ cd execute_eu
     echo "#SBATCH -J $run_name" >&3
     echo "#SBATCH --gres=gpu:1" >&3
 #     echo "#SBATCH --mem-per-cpu=125gb" >&3
-    echo "#SBATCH --time=00:30:00" >&3
+    echo "#SBATCH --time=00:50:00" >&3
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3
