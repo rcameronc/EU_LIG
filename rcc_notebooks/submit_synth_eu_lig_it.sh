@@ -23,7 +23,7 @@ do
 for place in english_channel # denmark_netherlands north_england # northsea_uk_tight # arctic # # europe
 do
 
-for scale in 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+for scale in 1 2 3 4 5 6 7 8 9 10
 do
 
 # put together file name

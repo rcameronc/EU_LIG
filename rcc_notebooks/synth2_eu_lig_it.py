@@ -105,17 +105,17 @@ def gpr_it():
     ds = ds.load().chunk((-1,-1,-1))
     ds = ds.interp(lon=ds_template.lon, lat=ds_template.lat).to_dataset()
 
-    # choose arbitrary true model
-    ds_true = ds.sel(modelrun=['glac1d_l96C_ump4_lm10'])
+    # choose arbitrary prior model
+    ds_prior = ds.sel(modelrun=['glac1d_l96C_ump4_lm10'])
 
     # choose prior model
 #     ds = ds.sel(modelrun=modelrun)
 
     # make noisy version of true model
-    ds = ds_true + np.random.randn(ds_true.rsl.shape[0], 
-                                 ds_true.rsl.shape[1], 
-                                 ds_true.rsl.shape[2], 
-                                 ds_true.rsl.shape[3]) * scale * 0.1 
+    ds_true = ds_prior + np.random.randn(ds_prior.rsl.shape[0], 
+                                 ds_prior.rsl.shape[1], 
+                                 ds_prior.rsl.shape[2], 
+                                 ds_prior.rsl.shape[3]) * scale * 0.1 
 
 
     likelist = []
@@ -129,8 +129,8 @@ def gpr_it():
 
     #interpolate/select priors from GIA model
     df_place['rsl_giatrue'] = df_place.apply(lambda row: ds_select(ds_true, row), axis=1)
-    df_place['rsl_giaprior'] = df_place.apply(lambda row: ds_select(ds, row), axis=1)
-    df_place['age_giaprior'] = df_place.apply(lambda row: ds_ageselect(ds, row), axis=1)
+    df_place['rsl_giaprior'] = df_place.apply(lambda row: ds_select(ds_prior, row), axis=1)
+    df_place['age_giaprior'] = df_place.apply(lambda row: ds_ageselect(ds_prior, row), axis=1)
 
     #calculate residuals
     # df_place['rsl_realresid'] = df_place.rsl - df_place.rsl_giaprior
