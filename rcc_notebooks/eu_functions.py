@@ -97,7 +97,7 @@ def make_mod(path, ice_model, lith, ages, extent, zeros=False):
     files = f'{path}*.nc'
     basefiles = glob.glob(files)
     modelrun = [key.split('output_', 1)[1][:-3].replace('.', '_') for key in basefiles]
-    dss = xr.open_mfdataset(files,
+    dss = xr.open_mfdataset(basefiles,
                             chunks=None,
                             concat_dim='modelrun',
                             combine='nested')
@@ -136,17 +136,15 @@ def add_presday_0s(df_place, nout):
     """ Prescribe present-day RSL to zero by adding zero points at t=10 yrs."""
 
     #prescribe present-day RSL to zero
-    preslocs1 = df_place.groupby(['lat', 'lon'])[['rsl',
-                                                 'rsl_er_max',
-                                                 'age']].nunique().reset_index()[['lat',
-                                                                                  'lon']][::int(50/nout)]
+    preslocs1 = df_place.groupby(['lat','lon'])[['rsl']]
+    preslocs1 = preslocs1.nunique().reset_index()[['lat', 'lon']]
 
     # make more present day points at zero on an nout/nout grid
     lat = np.linspace(min(df_place.lat), max(df_place.lat), nout)
     lon = np.linspace(min(df_place.lon), max(df_place.lon), nout)
-    xy = np.array(list(product(lon, lat)))[::int(nout/2)]
+    latlon = np.array(list(product(lon, lat)))
 
-    preslocs2 = pd.DataFrame(xy, columns=['lon', 'lat'])
+    preslocs2 = pd.DataFrame(latlon, columns=['lon', 'lat']).sample(nout)
 
     preslocs = pd.concat([preslocs1, preslocs2]).reset_index(drop=True)
 
@@ -154,13 +152,14 @@ def add_presday_0s(df_place, nout):
     preslocs['rsl_er'] = 0.1
     preslocs['rsl_er_max'] = 0.1
     preslocs['rsl_er_min'] = 0.1
-    preslocs['age_er'] = 1
-    preslocs['age_er_max'] = 1
-    preslocs['age_er_min'] = 1
-    preslocs['age'] = 10
+    preslocs['age_er'] = 0.1
+    preslocs['age_er_max'] = 0.1
+    preslocs['age_er_min'] = 0.1
+    preslocs['age'] = 1
 
     df_place = pd.concat([df_place, preslocs]).reset_index(drop=True)
     return df_place
+
 
 def import_barnett2020(path):
     
@@ -430,7 +429,7 @@ def predict_post_f(nout, ages, ds_single, df_place, m):
     var = tf.concat(var, 0)
 
     #denormalize to return correct values
-    y_pred = denormalize(y_pred, df_place.rsl_realresid)
+#     y_pred = denormalize(y_pred, df_place.rsl_realresid)
 
     # reshape output vectors
     Zp = np.array(y_pred).reshape(nout, nout, len(ages))
@@ -449,15 +448,17 @@ def run_gpr(nout, ds_single, ages, k1len, k2len, k3len, k4len, df_place):
 
     # Input space, rsl normalized to zero mean, unit variance
     X = np.stack((df_place.lon, df_place.lat, df_place.age), 1)
+    
+    RSL = df_place.rsl_realresid.values.reshape(-1,1) 
 
-    RSL = normalize(df_place.rsl_realresid)
+#     RSL = normalize(df_place.rsl_realresid)
 
     #define kernels  with bounds
     k1 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1000)
     k1.lengthscales = bounded_parameter(10, 1000, k1len) 
     k1.variance = bounded_parameter(0.01, 100, 2)
 
-    k2 = gpf.kernels.Matern32(active_dims=[2], lengthscales=1) 
+    k2 = gpf.kernels.Matern52(active_dims=[2], lengthscales=1) 
     k2.lengthscales = bounded_parameter(1, 100000, k2len)
     k2.variance = bounded_parameter(0.01, 100, 1)
 
@@ -471,11 +472,13 @@ def run_gpr(nout, ds_single, ages, k1len, k2len, k3len, k4len, df_place):
 
     k5 = gpf.kernels.White(active_dims=[0, 1, 2])
     k5.variance = bounded_parameter(0.01, 100, 1)
+    
+    k6 = gpf.kernels.Constant(0.00001, active_dims=[2])
 
-    kernel = (k1 * k2) + (k3 * k4) + k5
+    kernel = (k1 * k2)  + k6 # + (k3 * k4)
 
     ##################	  BUILD AND TRAIN MODELS 	#######################
-    noise_variance = (df_place.rsl_er.ravel())**2  
+    noise_variance = (df_place.rsl_er.ravel())**2 + 1e-6
 
     m = GPR_new((X, RSL), kernel=kernel, noise_variance=noise_variance) 
     
@@ -533,14 +536,14 @@ def run_gpr(nout, ds_single, ages, k1len, k2len, k3len, k4len, df_place):
     ds_varp = da_varp.to_dataset(name='rsl')
     ds_zp = da_zp.to_dataset(name='rsl')
 
+        
     #Calculate data-model misfits & GPR vals at RSL data locations
     df_place['gpr_posterior'] = df_place.apply(lambda row: ds_select(ds_priorplusgpr, row), axis=1)
     df_place['gprpost_std'] = df_place.apply(lambda row: ds_select(ds_varp, row), axis=1)
     df_place['gpr_diff'] = df_place.apply(lambda row: row.rsl - row.gpr_posterior, axis=1)
     df_place['diffdiv'] = df_place.gpr_diff / df_place.rsl_er
 
-    # change likelihood to negative because we're minimizing neg log likelihood but want max/largest
-    likelihood = - m.log_marginal_likelihood().numpy()
+    likelihood = m.log_marginal_likelihood().numpy()
     
     return ds_giapriorinterp, ds_zp, ds_priorplusgpr, ds_varp, likelihood, m, df_place
 
