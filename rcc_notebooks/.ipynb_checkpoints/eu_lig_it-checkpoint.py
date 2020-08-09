@@ -148,7 +148,7 @@ def gpr_it():
     k1.lengthscales = bounded_parameter(10, 100000, k1len) 
 #     k1.variance = bounded_parameter(0.01, 10000, 2)
 
-    k2 = gpf.kernels.Matern52(active_dims=[2], lengthscales=1) 
+    k2 = gpf.kernels.Matern32(active_dims=[2], lengthscales=1) 
     k2.lengthscales = bounded_parameter(0.1, 100000, k2len)
 #     k2.variance = bounded_parameter(0.01, 10000, 1)
 
@@ -156,7 +156,7 @@ def gpr_it():
     k3.lengthscales = bounded_parameter(1000, 20000, k3len)  
 #     k3.variance = bounded_parameter(0.01, 10000, 2)
 
-    k4 = gpf.kernels.Matern32(active_dims=[2], lengthscales=1) 
+    k4 = gpf.kernels.Matern52(active_dims=[2], lengthscales=1) 
     k4.lengthscales = bounded_parameter(1, 100000, k4len)
     k4.variance = bounded_parameter(0.01, 10000, 1)
 
@@ -165,7 +165,7 @@ def gpr_it():
     
     k6 = gpf.kernels.Constant(0.00001, active_dims=[2])
 
-    kernel = (k1 * k2) + k6 #  + (k3 * k4)# 
+    kernel = (k1 * k2) + k4 + k6 #  + (k3 * k4)# 
 
     ##################	  BUILD AND TRAIN MODELS 	#######################
     noise_variance = (df_place.rsl_er.ravel())**2 + 1e-6
@@ -243,9 +243,9 @@ def gpr_it():
     name = ds.modelrun.values.tolist()
 
     path = f'output/{place}_{name}_{ages[0]}_{ages[-1]}'
-    da_zp.to_netcdf(path + '_dazp')
-    da_zp['model'] = name
-    da_zp['likelihood'] = likelihood
+    ds_zp.to_netcdf(path + '_dazp')
+    ds_zp['model'] = name
+    ds_zp['likelihood'] = likelihood
 
     ds_giapriorinterp.to_netcdf(path + '_giaprior')
     ds_giapriorinterp['model'] = name
@@ -263,18 +263,21 @@ def gpr_it():
 
     k1k2 = [[k.lengthscales.numpy(), k.variance.numpy()] for _, k in enumerate(m.kernel.kernels[0].kernels)]
 #     k3k4 = [[k.lengthscales.numpy(), k.variance.numpy()] for _, k in enumerate(m.kernel.kernels[1].kernels)]
+    k4 = [[m.kernel.kernels[1].lengthscales.numpy(), m.kernel.kernels[1].variance.numpy()]]
+
 #     k5 = [[np.nan,m.kernel.kernels[2].variance.numpy()]
-    k6 = [[np.nan,m.kernel.kernels[1].variance.numpy()]]
+
+    k6 = [[np.nan,m.kernel.kernels[2].variance.numpy()]]
 
 
     cols = ['lengthscale', 'variance']
 #     idx = ['k1', 'k2', 'k3', 'k4', 'k5']
-    idx = ['k1', 'k2', 'k6']
+    idx = ['k1', 'k2', 'k4', 'k6']
 #     idx = ['k1', 'k2','k3', 'k4', 'k6']
 
 
 #     df_params = pd.DataFrame(np.concatenate([k1k2, k3k4, k5]), columns=cols, index=idx)
-    df_params = pd.DataFrame(np.concatenate([k1k2, k6]), columns=cols, index=idx)
+    df_params = pd.DataFrame(np.concatenate([k1k2, k4, k6]), columns=cols, index=idx)
 
 
     df_params['model'] = name
