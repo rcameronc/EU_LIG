@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH -o out_glac1d_l96C_p3_15_12000_100_northsea_uk_tight.out
+#SBATCH -A jalab
+#SBATCH -J glac1d_l96C_p3_15_12000_100_northsea_uk_tight
+#SBATCH --gres=gpu:1
+#SBATCH --time=2:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=rcreel@ldeo.columbia.edu
+ 
+module load singularity
+module load cuda80/toolkit
+cd ../run_eu/
+singularity exec --nv /rigel/jalab/users/rcc2167/gpflow-tensorflow-rcc2167.simg bash run_glac1d_l96C_p3_15_12000_100_northsea_uk_tight.sh

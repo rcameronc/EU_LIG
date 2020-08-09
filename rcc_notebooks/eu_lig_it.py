@@ -64,7 +64,7 @@ def gpr_it():
             'northsea_uk': [-10, 10, 45, 59],
             'northsea_uk_tight': [-5, 10, 50, 55],
             'fennoscandia': [-15, 50, 45, 75],
-            'norway': [0, 50, 50, 75],
+            'norway': [0, 50, 50, 78],
             'europe_arctic': [-15, 88, 45, 85],
             'arctic': [15, 88, 40, 85],
             'english_channel': [-5, 2, 48, 52],
@@ -165,7 +165,7 @@ def gpr_it():
     
     k6 = gpf.kernels.Constant(0.00001, active_dims=[2])
 
-    kernel = (k1 * k2) + k4 + k6 #  + (k3 * k4)# 
+    kernel = (k1 * k2) + (k3 * k4) + k6 #  + (k3 * k4)# 
 
     ##################	  BUILD AND TRAIN MODELS 	#######################
     noise_variance = (df_place.rsl_er.ravel())**2 + 1e-6
@@ -262,8 +262,8 @@ def gpr_it():
     # write hyperparameters to csv
 
     k1k2 = [[k.lengthscales.numpy(), k.variance.numpy()] for _, k in enumerate(m.kernel.kernels[0].kernels)]
-#     k3k4 = [[k.lengthscales.numpy(), k.variance.numpy()] for _, k in enumerate(m.kernel.kernels[1].kernels)]
-    k4 = [[m.kernel.kernels[1].lengthscales.numpy(), m.kernel.kernels[1].variance.numpy()]]
+    k3k4 = [[k.lengthscales.numpy(), k.variance.numpy()] for _, k in enumerate(m.kernel.kernels[1].kernels)]
+#     k4 = [[m.kernel.kernels[1].lengthscales.numpy(), m.kernel.kernels[1].variance.numpy()]]
 
 #     k5 = [[np.nan,m.kernel.kernels[2].variance.numpy()]
 
@@ -272,12 +272,12 @@ def gpr_it():
 
     cols = ['lengthscale', 'variance']
 #     idx = ['k1', 'k2', 'k3', 'k4', 'k5']
-    idx = ['k1', 'k2', 'k4', 'k6']
-#     idx = ['k1', 'k2','k3', 'k4', 'k6']
+#     idx = ['k1', 'k2', 'k4', 'k6']
+    idx = ['k1', 'k2','k3', 'k4', 'k6']
 
 
-#     df_params = pd.DataFrame(np.concatenate([k1k2, k3k4, k5]), columns=cols, index=idx)
-    df_params = pd.DataFrame(np.concatenate([k1k2, k4, k6]), columns=cols, index=idx)
+    df_params = pd.DataFrame(np.concatenate([k1k2, k3k4, k6]), columns=cols, index=idx)
+#     df_params = pd.DataFrame(np.concatenate([k1k2, k4, k6]), columns=cols, index=idx)
 
 
     df_params['model'] = name

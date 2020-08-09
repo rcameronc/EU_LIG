@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Ice model
-for name in glac1d_ d6g_h6g_ # glac1d_
+for name in glac1d_ # d6g_h6g_ # glac1d_
 do
 
 #Earth model
-for lith in l96C l71C
+for lith in l96C # l71C
 do
 
 for lm in 3 5 7 8 9 10 15 20 30 40 50
@@ -20,7 +20,7 @@ do
 for tmin in 100 # 5990 1990
 do
 
-for place in northsea_uk_tight # arctic # # europe
+for place in norway # northsea_uk_tight # arctic # # europe
 do
 
 # put together file name
@@ -71,7 +71,7 @@ cd execute_eu
     echo "#SBATCH -J $run_name" >&3
     echo "#SBATCH --gres=gpu:1" >&3
 #     echo "#SBATCH --mem-per-cpu=125gb" >&3
-    echo "#SBATCH --time=20:00:00" >&3
+    echo "#SBATCH --time=2:00:00" >&3
     echo "#SBATCH --mail-type=ALL"  >&3  # specify what kind of emails you want to get
     echo "#SBATCH --mail-user=rcreel@ldeo.columbia.edu" >&3  # specify email address"
     echo " " >&3
