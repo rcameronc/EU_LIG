@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH -o out_d6g_h6g_l96C_p4_40_12000_100_norway.out
+#SBATCH -A jalab
+#SBATCH -J d6g_h6g_l96C_p4_40_12000_100_norway
+#SBATCH --gres=gpu:1
+#SBATCH --time=2:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=rcreel@ldeo.columbia.edu
+ 
+module load singularity
+module load cuda80/toolkit
+cd ../run_eu/
+singularity exec --nv /rigel/jalab/users/rcc2167/gpflow-tensorflow-rcc2167.simg bash run_d6g_h6g_l96C_p4_40_12000_100_norway.sh
