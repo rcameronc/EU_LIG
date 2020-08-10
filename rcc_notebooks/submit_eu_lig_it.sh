@@ -7,7 +7,7 @@ do
 #Earth model
 for lith in l96C # l71C
 do
-
+ 
 for lm in 3 5 7 8 9 10 15 20 30 40 50
 do
 

@@ -21,7 +21,7 @@ from eu_functions import *
 import tensorflow as tf
 import argparse
 
-@profile
+@profile 
 
 def gpr_it():
 
@@ -139,9 +139,9 @@ def gpr_it():
     # Input space, rsl normalized to zero mean, unit variance
     X = np.stack((df_place.lon, df_place.lat, df_place.age), 1)
     
-    RSL = df_place.rsl_realresid.values.reshape(-1,1) 
+#     RSL = df_place.rsl_realresid.values.reshape(-1,1) 
 
-#     RSL = normalize(df_place.rsl_realresid)
+    RSL = normalize(df_place.rsl_realresid)
 
     #define kernels  with bounds
     k1 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1000)

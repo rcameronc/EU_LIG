@@ -88,7 +88,7 @@ def load_nordata_fromsheet(sheet, path, fromsheet=False):
     df_nor['rsl_er'] = (df_nor.rsl_er_max + df_nor.rsl_er_min)/2
     df_nor['age_er'] = (df_nor.age_er_max + df_nor.age_er_min)/2
     return df_nor
-
+ 
 
 def make_mod(path, ice_model, lith, ages, extent, zeros=False):
 
