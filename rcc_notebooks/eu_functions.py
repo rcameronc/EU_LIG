@@ -429,7 +429,7 @@ def predict_post_f(nout, ages, ds_single, df_place, m):
     var = tf.concat(var, 0)
 
     #denormalize to return correct values
-#     y_pred = denormalize(y_pred, df_place.rsl_realresid)
+    y_pred = denormalize(y_pred, df_place.rsl_realresid)
 
     # reshape output vectors
     Zp = np.array(y_pred).reshape(nout, nout, len(ages))
@@ -444,108 +444,108 @@ def predict_post_f(nout, ages, ds_single, df_place, m):
     return da_zp, da_varp
 
 
-def run_gpr(nout, ds_single, ages, k1len, k2len, k3len, k4len, df_place):
+# def run_gpr(nout, ds_single, ages, k1len, k2len, k3len, k4len, df_place):
 
-    # Input space, rsl normalized to zero mean, unit variance
-    X = np.stack((df_place.lon, df_place.lat, df_place.age), 1)
+#     # Input space, rsl normalized to zero mean, unit variance
+#     X = np.stack((df_place.lon, df_place.lat, df_place.age), 1)
     
-    RSL = df_place.rsl_realresid.values.reshape(-1,1) 
+#     RSL = df_place.rsl_realresid.values.reshape(-1,1) 
 
-#     RSL = normalize(df_place.rsl_realresid)
+# #     RSL = normalize(df_place.rsl_realresid)
 
-    #define kernels  with bounds
-    k1 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1000)
-    k1.lengthscales = bounded_parameter(10, 1000, k1len) 
-    k1.variance = bounded_parameter(0.01, 100, 2)
+#     #define kernels  with bounds
+#     k1 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1000)
+#     k1.lengthscales = bounded_parameter(10, 1000, k1len) 
+#     k1.variance = bounded_parameter(0.01, 100, 2)
 
-    k2 = gpf.kernels.Matern52(active_dims=[2], lengthscales=1) 
-    k2.lengthscales = bounded_parameter(1, 100000, k2len)
-    k2.variance = bounded_parameter(0.01, 100, 1)
+#     k2 = gpf.kernels.Matern52(active_dims=[2], lengthscales=1) 
+#     k2.lengthscales = bounded_parameter(1, 100000, k2len)
+#     k2.variance = bounded_parameter(0.01, 100, 1)
 
-    k3 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1)
-    k3.lengthscales = bounded_parameter(1000, 20000, k3len)  
-    k3.variance = bounded_parameter(0.01, 100, 2)
+#     k3 = HaversineKernel_Matern32(active_dims=[0, 1], lengthscales=1)
+#     k3.lengthscales = bounded_parameter(1000, 20000, k3len)  
+#     k3.variance = bounded_parameter(0.01, 100, 2)
 
-    k4 = gpf.kernels.Matern32(active_dims=[2], lengthscales=1) 
-    k4.lengthscales = bounded_parameter(1, 100000, k4len)
-    k4.variance = bounded_parameter(0.01, 100, 1)
+#     k4 = gpf.kernels.Matern32(active_dims=[2], lengthscales=1) 
+#     k4.lengthscales = bounded_parameter(1, 100000, k4len)
+#     k4.variance = bounded_parameter(0.01, 100, 1)
 
-    k5 = gpf.kernels.White(active_dims=[0, 1, 2])
-    k5.variance = bounded_parameter(0.01, 100, 1)
+#     k5 = gpf.kernels.White(active_dims=[0, 1, 2])
+#     k5.variance = bounded_parameter(0.01, 100, 1)
     
-    k6 = gpf.kernels.Constant(0.00001, active_dims=[2])
+#     k6 = gpf.kernels.Constant(0.00001, active_dims=[2])
 
-    kernel = (k1 * k2)  + k6 # + (k3 * k4)
+#     kernel = (k1 * k2)  + k6 # + (k3 * k4)
 
-    ##################	  BUILD AND TRAIN MODELS 	#######################
-    noise_variance = (df_place.rsl_er.ravel())**2 + 1e-6
+#     ##################	  BUILD AND TRAIN MODELS 	#######################
+#     noise_variance = (df_place.rsl_er.ravel())**2 + 1e-6
 
-    m = GPR_new((X, RSL), kernel=kernel, noise_variance=noise_variance) 
+#     m = GPR_new((X, RSL), kernel=kernel, noise_variance=noise_variance) 
     
-    #Sandwich age of each lat/lon to enable gradient calculation
-    lonlat = df_place[['lon', 'lat']]
-    agetile = np.stack([df_place.age - 10, df_place.age, df_place.age + 10], axis=-1).flatten()
-    xyt_it = np.column_stack([lonlat.loc[lonlat.index.repeat(3)], agetile])
+#     #Sandwich age of each lat/lon to enable gradient calculation
+#     lonlat = df_place[['lon', 'lat']]
+#     agetile = np.stack([df_place.age - 10, df_place.age, df_place.age + 10], axis=-1).flatten()
+#     xyt_it = np.column_stack([lonlat.loc[lonlat.index.repeat(3)], agetile])
 
-    #hardcode indices for speed (softcoded alternative commented out)
-    indices = np.arange(1, len(df_place)*3, 3)
-    # indices = np.where(np.in1d(df_place.age, agetile))[0]
+#     #hardcode indices for speed (softcoded alternative commented out)
+#     indices = np.arange(1, len(df_place)*3, 3)
+#     # indices = np.where(np.in1d(df_place.age, agetile))[0]
     
-    # First optimize without age errs to get slope
-    min_kwargs = ({'method':'L-BFGS-B', 'jac':True})
+#     # First optimize without age errs to get slope
+#     min_kwargs = ({'method':'L-BFGS-B', 'jac':True})
     
-    tf.print('___First optimization___')
-    opt = Optimize()
-    closure = m.training_loss 
-    variables = m.trainable_variables
+#     tf.print('___First optimization___')
+#     opt = Optimize()
+#     closure = m.training_loss 
+#     variables = m.trainable_variables
     
-    opt_logs = opt.basinhopping(closure=m.training_loss, variables=m.trainable_variables, minimizer_kwargs=min_kwargs)
+#     opt_logs = opt.basinhopping(closure=m.training_loss, variables=m.trainable_variables, minimizer_kwargs=min_kwargs)
     
-    # Calculate posterior at training points + adjacent age points
-    mean, _ = m.predict_f(xyt_it)
+#     # Calculate posterior at training points + adjacent age points
+#     mean, _ = m.predict_f(xyt_it)
 
-    # make diagonal matrix of age slope at training points
-    Xgrad = np.diag(np.gradient(mean.numpy(), axis=0)[indices][:,0])
+#     # make diagonal matrix of age slope at training points
+#     Xgrad = np.diag(np.gradient(mean.numpy(), axis=0)[indices][:,0])
 
-    # multipy age errors by gradient 
-    Xnigp = np.diag(Xgrad @ np.diag((df_place.age_er/2)**2) @ Xgrad.T)    
+#     # multipy age errors by gradient 
+#     Xnigp = np.diag(Xgrad @ np.diag((df_place.age_er/2)**2) @ Xgrad.T)    
     
-    m = GPR_new((X, RSL), kernel=kernel, noise_variance=noise_variance + Xnigp)
+#     m = GPR_new((X, RSL), kernel=kernel, noise_variance=noise_variance + Xnigp)
 
-    #reoptimize
-    tf.print('___Second optimization___')
-#     opt = tf.optimizers.Adam(learning_rate)
+#     #reoptimize
+#     tf.print('___Second optimization___')
+# #     opt = tf.optimizers.Adam(learning_rate)
 
-    opt = Optimize()
-    closure = m.training_loss 
-    variables = m.trainable_variables
+#     opt = Optimize()
+#     closure = m.training_loss 
+#     variables = m.trainable_variables
 
-    opt_logs = opt.basinhopping(closure=closure, variables=variables, minimizer_kwargs=min_kwargs)
+#     opt_logs = opt.basinhopping(closure=closure, variables=variables, minimizer_kwargs=min_kwargs)
 
 
-    ##################	  INTERPOLATE MODELS 	#######################
-    ##################  --------------------	 ######################
-    # output space
-    da_zp, da_varp = predict_post_f(nout, ages, ds_single, df_place, m)
+#     ##################	  INTERPOLATE MODELS 	#######################
+#     ##################  --------------------	 ######################
+#     # output space
+#     da_zp, da_varp = predict_post_f(nout, ages, ds_single, df_place, m)
 
-    #interpolate all models onto GPR grid
-    ds_giapriorinterp  = interp_likegpr(ds_single, da_zp)
+#     #interpolate all models onto GPR grid
+#     ds_giapriorinterp  = interp_likegpr(ds_single, da_zp)
 
-    # add total prior RSL back into GPR
-    ds_priorplusgpr = da_zp + ds_giapriorinterp
-    ds_varp = da_varp.to_dataset(name='rsl')
-    ds_zp = da_zp.to_dataset(name='rsl')
+#     # add total prior RSL back into GPR
+#     ds_priorplusgpr = da_zp + ds_giapriorinterp
+#     ds_varp = da_varp.to_dataset(name='rsl')
+#     ds_zp = da_zp.to_dataset(name='rsl')
 
         
-    #Calculate data-model misfits & GPR vals at RSL data locations
-    df_place['gpr_posterior'] = df_place.apply(lambda row: ds_select(ds_priorplusgpr, row), axis=1)
-    df_place['gprpost_std'] = df_place.apply(lambda row: ds_select(ds_varp, row), axis=1)
-    df_place['gpr_diff'] = df_place.apply(lambda row: row.rsl - row.gpr_posterior, axis=1)
-    df_place['diffdiv'] = df_place.gpr_diff / df_place.rsl_er
+#     #Calculate data-model misfits & GPR vals at RSL data locations
+#     df_place['gpr_posterior'] = df_place.apply(lambda row: ds_select(ds_priorplusgpr, row), axis=1)
+#     df_place['gprpost_std'] = df_place.apply(lambda row: ds_select(ds_varp, row), axis=1)
+#     df_place['gpr_diff'] = df_place.apply(lambda row: row.rsl - row.gpr_posterior, axis=1)
+#     df_place['diffdiv'] = df_place.gpr_diff / df_place.rsl_er
 
-    likelihood = m.log_marginal_likelihood().numpy()
+#     likelihood = m.log_marginal_likelihood().numpy()
     
-    return ds_giapriorinterp, ds_zp, ds_priorplusgpr, ds_varp, likelihood, m, df_place
+#     return ds_giapriorinterp, ds_zp, ds_priorplusgpr, ds_varp, likelihood, m, df_place
 
 def interp_ds(ds):
     return ds.interp(age=ds_single.age, lat=ds_single.lat, lon=ds_single.lon)

@@ -273,17 +273,18 @@ def gpr_it():
     cols = ['lengthscale', 'variance']
 #     idx = ['k1', 'k2', 'k3', 'k4', 'k5']
 #     idx = ['k1', 'k2', 'k4', 'k6']
-    idx = ['k1', 'k2','k3', 'k4', 'k6']
+    ks = ['k1', 'k2','k3', 'k4', 'k6']
 
 
-    df_params = pd.DataFrame(np.concatenate([k1k2, k3k4, k6]), columns=cols, index=idx)
+    df_params = pd.DataFrame(np.concatenate([k1k2, k3k4, k6]), columns=cols)
 #     df_params = pd.DataFrame(np.concatenate([k1k2, k4, k6]), columns=cols, index=idx)
 
 
     df_params['model'] = name
     df_params['likelihood'] = likelihood
     df_params['rmse'] = rmse
-    df_params.to_csv(path + '_hyperparams.csv', index=True)
+    df_params['k'] = ks
+    df_params.to_csv(path + '_hyperparams.csv', index=False)
 
 
     df_out = pd.DataFrame({'modelrun': name,
